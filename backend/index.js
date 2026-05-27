@@ -122,8 +122,14 @@ app.use(cors({
     'http://localhost:3000',
     'https://lb-nagar-market.vercel.app'
   ],
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// Explicitly handle OPTIONS for preflight
+app.options('*', cors());
+
 app.use(express.json());
 
 // Routes
