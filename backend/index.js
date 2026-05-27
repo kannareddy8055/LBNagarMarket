@@ -23,29 +23,29 @@ process.env.TZ = 'Asia/Kolkata';
 const app = express();
 
 const seedUsers = async () => {
-    try {
-        const users = [
-            { username: 'superadmin', password: 'superadmin@123', role: 'admin' },
-            { username: 'owner', password: 'owner@123', role: 'owner', email: 'devagonisai2005@gmail.com' },
-            { username: 'staff', password: 'staff@123', role: 'staff', email: 'devagonisai2005@gmail.com' },
-            { username: 'charan', password: 'charan', role: 'owner', email: 'devagonisai2005@gmail.com' },
-        ];
-        
-        for (const u of users) {
-          const exists = await User.findOne({ username: u.username });
-          if (!exists) {
-            await User.create(u);
-            console.log(`User created: ${u.username}`.cyan);
-          } else if (!exists.email && u.email) {
-            // Fix existing users who have no email
-            exists.email = u.email;
-            await exists.save();
-            console.log(`Updated email for existing user: ${u.username} → ${u.email}`.green);
-          }
-        }
-    } catch (err) {
-        console.error("Error seeding users:", err);
+  try {
+    const users = [
+      { username: 'superadmin', password: 'superadmin@123', role: 'admin' },
+      { username: 'owner', password: 'owner@123', role: 'owner', email: 'devagonisai2005@gmail.com' },
+      { username: 'staff', password: 'staff@123', role: 'staff', email: 'devagonisai2005@gmail.com' },
+      { username: 'charan', password: 'charan', role: 'owner', email: 'devagonisai2005@gmail.com' },
+    ];
+
+    for (const u of users) {
+      const exists = await User.findOne({ username: u.username });
+      if (!exists) {
+        await User.create(u);
+        console.log(`User created: ${u.username}`.cyan);
+      } else if (!exists.email && u.email) {
+        // Fix existing users who have no email
+        exists.email = u.email;
+        await exists.save();
+        console.log(`Updated email for existing user: ${u.username} → ${u.email}`.green);
+      }
     }
+  } catch (err) {
+    console.error("Error seeding users:", err);
+  }
 };
 
 const runMigration = async () => {
@@ -84,13 +84,13 @@ const runMigration = async () => {
     }
 
     console.log(`[MIGRATION] Rebuilding Stock records from transaction history...`.yellow);
-    
+
     // 1. Get all unique (tenant, farmer, item) combinations from all transactional models
     const combinations = new Set();
-    
+
     const pEntries = await Purchase.find({}, 'tenantId farmerId itemId farmerName itemName');
     pEntries.forEach(e => combinations.add(JSON.stringify({ t: e.tenantId, f: e.farmerId, i: e.itemId, fn: e.farmerName, in: e.itemName })));
-    
+
     const sEntries = await Sale.find({}, 'tenantId farmerId itemId farmerName itemName');
     sEntries.forEach(e => combinations.add(JSON.stringify({ t: e.tenantId, f: e.farmerId, i: e.itemId, fn: e.farmerName, in: e.itemName })));
 
@@ -133,10 +133,10 @@ app.use('/api', apiRoutes);
 if (process.env.NODE_ENV === 'production') {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
-  
+
   // Serve static assets from frontend build directory
   app.use(express.static(path.join(__dirname, '../frontend/dist')));
-  
+
   // All other GET requests serve index.html (client-side routing fallback)
   app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
@@ -152,16 +152,17 @@ if (process.env.NODE_ENV === 'production') {
 const PORT = process.env.PORT || 5000;
 const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/mandi_erp';
 
-// Always start the server to prevent standard net::ERR_CONNECTION_REFUSED on the frontend
-app.listen(PORT, () => {
-  console.log(`--- Server running on port ${PORT} ---`.yellow.bold);
-  console.log(`--- API accessible at http://localhost:${PORT}/api ---\n`.green.bold);
-});
-
-mongoose.connect(MONGO_URI)
+// Connect to MongoDB BEFORE starting server
+mongoose.connect(MONGO_URI, {
+  serverSelectionTimeoutMS: 30000,
+  socketTimeoutMS: 45000,
+  maxPoolSize: 10,
+  minPoolSize: 2,
+  retryWrites: true,
+})
   .then(async () => {
     console.log(`\n=== MongoDB Connected: ${mongoose.connection.host} ===`.cyan.bold);
-    
+
     // Drop old unique stock indexes to allow separate rate-wise stock tracking
     try {
       await mongoose.connection.db.collection('stocks').dropIndex('farmerId_1_itemId_1');
@@ -184,8 +185,19 @@ mongoose.connect(MONGO_URI)
 
     await seedUsers();
     await runMigration();
+
+    // Start server AFTER successful MongoDB connection
+    app.listen(PORT, () => {
+      console.log(`--- Server running on port ${PORT} ---`.yellow.bold);
+      console.log(`--- API accessible at http://localhost:${PORT}/api ---\n`.green.bold);
+    });
   })
   .catch((err) => {
-    console.error(`\n=== MongoDB Connection Error (Please whitelist your IP on MongoDB Atlas) ===\n${err.message}`.red.bold);
-    console.error(`The backend is running, but database operations will fail until connected.`.yellow);
+    console.error(`\n=== MongoDB Connection Error ===\n${err.message}`.red.bold);
+    console.error(`⚠️  ACTION REQUIRED:`.yellow);
+    console.error(`1. Check MongoDB Atlas IP whitelist includes Render IP (0.0.0.0/0 for dynamic IP)`.yellow);
+    console.error(`2. Verify MONGO_URI environment variable is correct`.yellow);
+    console.error(`3. Wait 60+ seconds for Render deployment to stabilize MongoDB connection`.yellow);
+    console.error(`The backend will NOT start until MongoDB connects.`.red);
+    process.exit(1);
   });
