@@ -1,0 +1,36 @@
+# Dependency directories
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Production builds
+frontend/dist/
+backend/dist/
+
+# Environment files (sensitive credentials)
+.env
+.env.local
+.env.*.local
+backend/.env
+
+# Log files
+*.log
+lint_output.txt
+lint_output.json
+lint.json
+dev_error.log
+dev_error_cmd.log
+error.txt
+backend/error.txt
+
+# OS/IDE files
+.DS_Store
+.vscode/
+.idea/
+Thumbs.db
+
+# Scratch and test files
+scratch_test_date.js
+backend/scratch/
+backend/test.js
+backend/test2.js
