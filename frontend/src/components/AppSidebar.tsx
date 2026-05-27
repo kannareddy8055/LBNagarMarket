@@ -59,7 +59,7 @@ export function AppSidebar() {
         <div className="p-4 border-b border-sidebar-border flex items-center justify-between">
           {!collapsed ? (
             <h1 className="text-lg font-bold text-sidebar-foreground tracking-tight">
-              🥬 Mandi Manager
+              🥬 Agri Ledger
             </h1>
           ) : (
             <span className="text-lg">🥬</span>

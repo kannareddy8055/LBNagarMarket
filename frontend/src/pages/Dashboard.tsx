@@ -45,7 +45,7 @@ export default function Dashboard() {
         ))}
       </div>
       <div className="mt-8 form-section">
-        <h2 className="text-lg font-semibold mb-2">Welcome to Mandi Manager</h2>
+        <h2 className="text-lg font-semibold mb-2">Welcome to Agri Ledger</h2>
         <p className="text-muted-foreground">
           Use the sidebar to manage accounts, products, purchases, and sales. 
           Start by creating Farmers and Customers in <strong>Masters → Accounts</strong>, 
