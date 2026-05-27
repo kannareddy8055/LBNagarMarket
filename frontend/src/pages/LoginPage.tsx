@@ -66,7 +66,7 @@ export default function LoginPage() {
            <div className="mx-auto bg-primary/10 w-16 h-16 rounded-3xl flex items-center justify-center mb-4 transform rotate-12">
              {step === 1 ? <Lock className="text-primary h-8 w-8 -rotate-12" /> : <Mail className="text-primary h-8 w-8 -rotate-12" />}
            </div>
-           <CardTitle className="text-3xl font-black tracking-tight text-primary">MANDI PRO</CardTitle>
+           <CardTitle className="text-3xl font-black tracking-tight text-primary">AGRI LEDGER</CardTitle>
            <CardDescription className="text-slate-500 font-medium">Enterprise Management System</CardDescription>
         </div>
 

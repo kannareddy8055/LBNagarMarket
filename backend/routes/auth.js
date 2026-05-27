@@ -89,7 +89,10 @@ router.post('/login', async (req, res) => {
     user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
     await user.save();
 
-    await sendOTPEmail(user.email, otp, 'Login');
+    // Send email in the background (non-blocking) so the login response doesn't hang
+    sendOTPEmail(user.email, otp, 'Login').catch(err => {
+      console.error('[EMAIL] Background login OTP delivery failed:', err.message);
+    });
 
     res.json({ message: 'OTP sent to your registered email', needsOTP: true, userId: user._id });
   } catch (err) {
@@ -124,7 +127,12 @@ router.post('/verify-otp', async (req, res) => {
 router.post('/send-creation-otp', async (req, res) => {
     const { email } = req.body;
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    await sendOTPEmail(email, otp, 'Account Registration');
+    
+    // Send email in the background (non-blocking) so the request doesn't hang
+    sendOTPEmail(email, otp, 'Account Registration').catch(err => {
+      console.error('[EMAIL] Background registration OTP delivery failed:', err.message);
+    });
+    
     res.json({ message: 'OTP sent to email', otp });
 });
 
