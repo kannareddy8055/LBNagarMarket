@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import colors from 'colors';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import apiRoutes from './routes/api.js';
 
@@ -135,20 +136,21 @@ app.use(express.json());
 // Routes
 app.use('/api', apiRoutes);
 
-// Serve frontend static assets in production
-if (process.env.NODE_ENV === 'production') {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
+// Serve frontend static assets in production (if built locally/monorepo deployment)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendDistPath = path.join(__dirname, '../frontend/dist');
 
+if (process.env.NODE_ENV === 'production' && fs.existsSync(frontendDistPath)) {
   // Serve static assets from frontend build directory
-  app.use(express.static(path.join(__dirname, '../frontend/dist')));
-
+  app.use(express.static(frontendDistPath));
+  
   // All other GET requests serve index.html (client-side routing fallback)
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/dist/index.html'));
+    res.sendFile(path.join(frontendDistPath, 'index.html'));
   });
 } else {
-  // Health Check in development
+  // Health Check/API entry point
   app.get('/', (req, res) => {
     res.send('Mandi ERP API is running...');
   });

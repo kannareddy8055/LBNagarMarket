@@ -19,11 +19,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'mandi_erp_secret_key_2026';
 console.log(`[EMAIL] SMTP_USER = ${process.env.SMTP_USER || '❌ NOT FOUND'}`);
 console.log(`[EMAIL] SMTP_PASS = ${process.env.SMTP_PASS ? '✅ Loaded (' + process.env.SMTP_PASS.length + ' chars)' : '❌ NOT FOUND'}`);
 
-// Email Configuration — Gmail SMTP via App Password (Explicit SMTPS for Cloud Deployments)
+// Email Configuration — Gmail SMTP via App Password (Explicit SMTPS/STARTTLS for Cloud Deployments)
 const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // Use SSL/TLS
+  port: 587,
+  secure: false, // Use STARTTLS (false for 587, true for 465)
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
