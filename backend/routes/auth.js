@@ -28,6 +28,16 @@ const transporter = nodemailer.createTransport({
   }
 });
 
+// Verify connection configuration on startup
+transporter.verify((error, success) => {
+  if (error) {
+    console.error(`[EMAIL] ❌ SMTP Connection Verification Failed: ${error.message}`.red.bold);
+    console.error('[EMAIL] Check that SMTP_USER and SMTP_PASS are set correctly in your environment.'.yellow);
+  } else {
+    console.log(`[EMAIL] ✅ SMTP Connection Verified Successfully! Server is ready to deliver OTPs.`.green.bold);
+  }
+});
+
 
 const sendOTPEmail = async (email, otp, type = 'Login') => {
   console.log(`[EMAIL] Sending OTP to: ${email} | OTP: ${otp} | Task: ${type}`.blue.bold);
