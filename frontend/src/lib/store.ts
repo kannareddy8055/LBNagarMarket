@@ -129,7 +129,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
       ...options.headers,
     },
   });
-  
+
   if (response.status === 401 || response.status === 403) {
     localStorage.removeItem('auth_user');
     window.location.href = '/login';
@@ -302,11 +302,11 @@ export function formatDate(dateStr: string): string {
 
 export function todayStr(): string {
   const d = new Date();
-  const options: Intl.DateTimeFormatOptions = { 
-    timeZone: 'Asia/Kolkata', 
-    year: 'numeric', 
-    month: '2-digit', 
-    day: '2-digit' 
+  const options: Intl.DateTimeFormatOptions = {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
   };
   const formatter = new Intl.DateTimeFormat('en-CA', options);
   return formatter.format(d);
@@ -327,7 +327,7 @@ export interface LedgerEntry {
 export function getCustomerLedger(customerId: string, fromDate: string, toDate: string, allSales: Sale[], allCash: CashEntry[]): LedgerEntry[] {
   const sales = allSales.filter(s => s.customerId === customerId);
   const cash = allCash.filter(c => c.accountId === customerId && c.type === 'sales');
-  
+
   const entries: LedgerEntry[] = [
     ...sales.map(s => ({
       id: s.id,
@@ -372,7 +372,7 @@ export function getCustomerLedger(customerId: string, fromDate: string, toDate: 
 export function getFarmerLedger(farmerId: string, fromDate: string, toDate: string, allPurchases: Purchase[], allCash: CashEntry[]): LedgerEntry[] {
   const purchases = allPurchases.filter(p => p.farmerId === farmerId);
   const cash = allCash.filter(c => c.accountId === farmerId && c.type === 'purchase');
-  
+
   const entries: LedgerEntry[] = [
     ...purchases.map(p => ({
       id: p.id,
