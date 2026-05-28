@@ -130,7 +130,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
     },
   });
 
-  if (response.status === 401 || response.status === 403) {
+  if ((response.status === 401 || response.status === 403) && !endpoint.startsWith('/auth/')) {
     localStorage.removeItem('auth_user');
     window.location.href = '/login';
     throw new Error('Session expired. Please login again.');
