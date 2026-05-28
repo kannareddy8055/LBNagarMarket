@@ -24,6 +24,7 @@ const transporter = nodemailer.createTransport({
   host: 'smtp.gmail.com',
   port: 587,
   secure: false, // Use STARTTLS (false for 587, true for 465)
+  family: 4, // Force IPv4 resolution (crucial to prevent IPv6 ENETUNREACH error on Render!)
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS
