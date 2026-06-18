@@ -13,6 +13,9 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 const router = express.Router();
 
+// In-memory store for OTPs (Key: userId string, Value: { otp: string, expires: Date })
+const otpStore = new Map();
+
 const JWT_SECRET = process.env.JWT_SECRET || 'mandi_erp_secret_key_2026';
 
 // Debug: verify credentials loaded
@@ -96,9 +99,10 @@ router.post('/login', async (req, res) => {
     if (!user.email) return res.status(400).json({ message: 'No email address registered for this account. Contact Admin.' });
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    user.otp = otp;
-    user.otpExpires = new Date(Date.now() + 10 * 60 * 1000);
-    await user.save();
+    const expires = new Date(Date.now() + 10 * 60 * 1000);
+    
+    // Save OTP to in-memory store instead of MongoDB
+    otpStore.set(user._id.toString(), { otp, expires });
 
     // Send email in the background (non-blocking) so the login response doesn't hang
     sendOTPEmail(user.email, otp, 'Login').catch(err => {
@@ -116,13 +120,18 @@ router.post('/verify-otp', async (req, res) => {
   const { userId, otp } = req.body;
   try {
     const user = await User.findById(userId);
-    if (!user || user.otp !== otp || user.otpExpires < new Date()) {
+    if (!user) {
       return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
-    user.otp = undefined;
-    user.otpExpires = undefined;
-    await user.save();
+    // Retrieve and validate OTP from in-memory store
+    const storedData = otpStore.get(userId.toString());
+    if (!storedData || storedData.otp !== otp || storedData.expires < new Date()) {
+      return res.status(400).json({ message: 'Invalid or expired OTP' });
+    }
+
+    // Remove OTP from memory cache
+    otpStore.delete(userId.toString());
 
     const tenantId = user.role === 'owner' ? user._id : (user.tenantId || user._id);
     const payload = { id: user._id, username: user.username, role: user.role, tenantId };
