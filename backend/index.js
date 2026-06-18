@@ -101,13 +101,18 @@ const runMigration = async () => {
     const uniqueCombs = Array.from(combinations).map(c => JSON.parse(c));
     console.log(`[MIGRATION] Found ${uniqueCombs.length} unique Farmer/Item combinations.`.cyan);
 
-    for (const comb of uniqueCombs) {
-      try {
-        const { t: tenantId, f: farmerId, i: itemId } = comb;
-        await rebuildStockForFarmerItem(farmerId, itemId, tenantId);
-      } catch (e) {
-        console.error(`[MIGRATION] Error rebuilding stock for ${comb.fn}/${comb.in}:`, e.message);
-      }
+    // Run in parallel chunks of 15 to avoid blocking and speed up execution
+    const batchSize = 15;
+    for (let i = 0; i < uniqueCombs.length; i += batchSize) {
+      const batch = uniqueCombs.slice(i, i + batchSize);
+      await Promise.all(batch.map(async (comb) => {
+        try {
+          const { t: tenantId, f: farmerId, i: itemId } = comb;
+          await rebuildStockForFarmerItem(farmerId, itemId, tenantId);
+        } catch (e) {
+          console.error(`[MIGRATION] Error rebuilding stock for ${comb.fn}/${comb.in}:`, e.message);
+        }
+      }));
     }
     console.log(`[MIGRATION] Completed successfully.`.green.bold);
   } catch (err) {
@@ -192,12 +197,15 @@ mongoose.connect(MONGO_URI, {
     }
 
     await seedUsers();
-    await runMigration();
 
-    // Start server AFTER successful MongoDB connection
+    // Start server immediately so it's instantly responsive to requests
     app.listen(PORT, () => {
       console.log(`--- Server running on port ${PORT} ---`.yellow.bold);
       console.log(`--- API accessible at http://localhost:${PORT}/api ---\n`.green.bold);
+      
+      // Run the migration asynchronously in the background so it doesn't block server startup
+      console.log(`[MIGRATION] Rebuilding stock in background...`.yellow);
+      runMigration();
     });
   })
   .catch((err) => {
