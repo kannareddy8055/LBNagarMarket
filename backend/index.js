@@ -44,6 +44,17 @@ const seedUsers = async () => {
         console.log(`Updated email for existing user: ${u.username} → ${u.email}`.green);
       }
     }
+
+    // Ensure all existing users in the database have hashed passwords
+    const allUsers = await User.find({});
+    for (const user of allUsers) {
+      if (!user.password.startsWith('$2a$') && !user.password.startsWith('$2b$')) {
+        console.log(`[SECURITY] Hashing existing plaintext password for user: ${user.username}`.yellow);
+        user.password = user.password;
+        user.markModified('password');
+        await user.save();
+      }
+    }
   } catch (err) {
     console.error("Error seeding users:", err);
   }
